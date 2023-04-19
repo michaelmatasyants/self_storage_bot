@@ -2,6 +2,9 @@ import os
 from dotenv import load_dotenv
 import asyncio
 
+import bot_db
+from keyboard import *
+
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ContentTypes
 
@@ -9,7 +12,7 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text, ContentTypeFilter
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ChatActions, ReplyKeyboardMarkup, KeyboardButton
+
 from aiogram.types import Contact
 
 load_dotenv()
@@ -27,66 +30,37 @@ async def on_startup(_):
     pass
 
 
-def main_keyboard():
-    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    buttons = [
-        types.InlineKeyboardButton(text='*️⃣ Поддержка', callback_data='support'),
-        types.InlineKeyboardButton(text='❓ F.A.Q', callback_data='faq'),
-        types.InlineKeyboardButton(text='🎒 Забрать вещи', callback_data='get_back'),
-        types.InlineKeyboardButton(text='✍ Оставить заявку', callback_data='application'),
-        types.InlineKeyboardButton(text='📦 Мои боксы', callback_data='my_boxes'),
-    ]
-    keyboard.add(*buttons)
-    return keyboard
+@dp.callback_query_handler(text='storage_list')
+async def send_good_list(call: types.CallbackQuery):
+    good_list = """Что принимается на хранение:                                                                                                                              
+✅ Мебель                             
+✅ Бытовая техника                 
+✅ Одежда и обувь                      
+✅ Инструменты
+✅ Посуда
+✅ Книги
+✅ Шины
+✅ Велосипеды
+✅ Мотоциклы и скутеры
+✅ Спортивный инвентарь
+Что не принимается на хранение:
+❌ Алкоголь
+❌ Продукты
+❌ Деньги и драгоценности
+❌ Изделия из натурального меха
+❌ Живые цветы и растения
+❌ Домашние питомцы
+❌ Оружие и боеприпасы
+❌ Взрывоопасные вещества и токсины
+❌ Лаки и краски в негерметичной таре
+❌ Любой мусор и отходы
+    """
+    await call.message.answer(good_list, reply_markup=next_keyboard())
 
 
-def next_main_keyboard():
-    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    buttons = [
-        types.InlineKeyboardButton(text='❌ Отменить', callback_data='cancel'),
-        types.InlineKeyboardButton(text='🔧 Забрать курьером', callback_data='by_runner'),
-        types.InlineKeyboardButton(text='🚙 Заберу лично', callback_data='by_myself'),
-    ]
-    keyboard.add(*buttons)
-    return keyboard
-
-
-def giveaway():
-    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    buttons = [
-        types.InlineKeyboardButton(text='📦 Оставить вещи', callback_data='application'),
-        types.InlineKeyboardButton(text='🎒 Забрать вещи', callback_data='get_back')
-    ]
-    keyboard.add(*buttons)
-    return keyboard
-
-
-def next_keyboard():
-    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    buttons = [
-        types.InlineKeyboardButton(text='✍ Оставить заявку', callback_data='application'),
-        types.InlineKeyboardButton(text='⬅️ Обратно в меню', callback_data='back_to_menu'),
-    ]
-    keyboard.add(*buttons)
-    return keyboard
-
-
-def choose_del():
-    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
-    buttons = [
-        types.InlineKeyboardButton(text='⬅️ Обратно в меню', callback_data='back_to_menu'),
-        types.InlineKeyboardButton(text='🔧 Позвать курьера', callback_data='runner'),
-        types.InlineKeyboardButton(text='🚙 Отвезу сам', callback_data='myself'),
-        types.InlineKeyboardButton(text='*️⃣ Поддержка', callback_data='support'),
-        types.InlineKeyboardButton(text='❓ F.A.Q', callback_data='faq')
-    ]
-    keyboard.add(*buttons)
-    return keyboard
-
-
-def request_keyboard():
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(KeyboardButton('📞 Отправить номер телефона', request_contact=True))
-    return keyboard
+@dp.callback_query_handler(text='support')
+async def to_support(call: types.CallbackQuery):
+    await call.message.answer('Выберите опцию:', reply_markup=support_buttons())
 
 
 @dp.callback_query_handler(text='faq')
@@ -99,23 +73,14 @@ async def send_faq(call: types.CallbackQuery):
 5. Наша система не предусматривает дополнительных платежей за неиспользованное пространство. Это означает, \
 что вы платите только за тот объем пространства, который фактически занимают ваши вещи, а не за весь объем комнаты для хранения.
 6. Мы предлагаем услугу мобильного хранения, которая включает доставку наших профессиональных упаковочных материалов. \
-Наша команда муверов соберет, упакует и маркирует все ваши вещи, а затем транспортирует их на наш склад. Все вещи хранятся на отдельных паллетах в надежных условиях. \
+Наша команда муверов соберет, упакует и маркирует все ваши вещи, а затем транспортирует их на наш склад. \
+Все вещи хранятся на отдельных паллетах в надежных условиях. \
 Наш склад постоянно контролируется видеокамерами без слепых зон, и круглосуточно охраняется.
 7. Вы можете контролировать свои вещи через специальное меню нашего бота. \
 Там вы можете заказать возврат вещей в любое удобное для вас время или добавить новые вещи для хранения. \
 Все ваши вещи всегда находятся в безопасности и готовы к использованию.
     """
-    await call.message.answer(faq, reply_markup=next_keyboard())
-
-
-@dp.callback_query_handler(text='price')
-async def send_price(call: types.CallbackQuery):
-    price_list = """
-Шины или велосипед: от 749 руб. в месяц
-Мало вещей: от 1 490 руб. в месяц
-Много вещей: от 8 190 руб. в месяц
-Cдача и возврат вещей: бесплатно через терминал или доставка 1 490 р. за 1 м³."""
-    await call.message.answer(price_list, reply_markup=next_keyboard())
+    await call.message.answer(faq, reply_markup=storage_list())
 
 
 @dp.callback_query_handler(text='back_to_menu')
