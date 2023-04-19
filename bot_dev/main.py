@@ -7,9 +7,10 @@ from aiogram.types import ContentTypes
 
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters import Text
+from aiogram.dispatcher.filters import Text, ContentTypeFilter
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ChatActions, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import Contact
 
 load_dotenv()
 tg_token = os.getenv('TG_BOT_TOKEN')
@@ -18,10 +19,17 @@ storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
 
+class D(StatesGroup):
+    contact = State()
+
+
+async def on_startup(_):
+    pass
+
+
 def main_keyboard():
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     buttons = [
-        types.InlineKeyboardButton(text='💵 Прайслист', callback_data='price'),
         types.InlineKeyboardButton(text='*️⃣ Поддержка', callback_data='support'),
         types.InlineKeyboardButton(text='❓ F.A.Q', callback_data='faq'),
         types.InlineKeyboardButton(text='🎒 Забрать вещи', callback_data='get_back'),
@@ -43,6 +51,16 @@ def next_main_keyboard():
     return keyboard
 
 
+def giveaway():
+    keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
+    buttons = [
+        types.InlineKeyboardButton(text='📦 Оставить вещи', callback_data='application'),
+        types.InlineKeyboardButton(text='🎒 Забрать вещи', callback_data='get_back')
+    ]
+    keyboard.add(*buttons)
+    return keyboard
+
+
 def next_keyboard():
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     buttons = [
@@ -59,15 +77,22 @@ def choose_del():
         types.InlineKeyboardButton(text='⬅️ Обратно в меню', callback_data='back_to_menu'),
         types.InlineKeyboardButton(text='🔧 Позвать курьера', callback_data='runner'),
         types.InlineKeyboardButton(text='🚙 Отвезу сам', callback_data='myself'),
+        types.InlineKeyboardButton(text='*️⃣ Поддержка', callback_data='support'),
+        types.InlineKeyboardButton(text='❓ F.A.Q', callback_data='faq')
     ]
     keyboard.add(*buttons)
+    return keyboard
+
+
+def request_keyboard():
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add(KeyboardButton('📞 Отправить номер телефона', request_contact=True))
     return keyboard
 
 
 @dp.callback_query_handler(text='faq')
 async def send_faq(call: types.CallbackQuery):
     faq = """
-1. Оформите заявку на сайте или по телефону.
+1. Оформите заявку, используя бота.
 2. Мы рассчитаем подходящий тариф, исходя из объема вещей.
 3. В удобное время к вам приедет команда муверов, упакует вещи, вынесет и отвезёт их на склад или на ваше новое место жительства.
 4. Когда какая-то вещь снова понадобится, закажите возврат, и мы привезем её в любую точку Москвы.
@@ -100,12 +125,13 @@ async def back_to_menu(call: types.CallbackQuery):
 
 @dp.callback_query_handler(text='application')
 async def leave_a_request(call: types.CallbackQuery):
-    await call.message.answer('Введите свой номер телефона')
+    await call.message.answer('Для продолжения нажмите кнопку ниже', reply_markup=request_keyboard())
+    await D.contact.set()
 
 
 @dp.message_handler(commands=['start'])
 async def start(msg: types.Message):
-    text = f"""Добро пожаловать! 
+    text = """Добро пожаловать! 
 Мы компания, предоставляющая малогабаритные ячейки для сезонного хранения вещей.
 Например велосипеды, каяки, cнегоходы. 
 Мы заберём ваши вещи на наш склад, сохраним и привезём обратно в любую точку Москвы.
@@ -115,4 +141,6 @@ async def start(msg: types.Message):
 
 
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    executor.start_polling(dp,
+                           skip_updates=True,
+                           on_startup=on_startup)
