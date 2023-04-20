@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 import asyncio
+from asyncio import sleep
 
 import bot_db
 from keyboard import *
@@ -24,6 +25,7 @@ dp = Dispatcher(bot, storage=storage)
 
 class D(StatesGroup):
     contact = State()
+    make_order = State()
 
 
 async def on_startup(_):
@@ -90,8 +92,44 @@ async def back_to_menu(call: types.CallbackQuery):
 
 @dp.callback_query_handler(text='application')
 async def leave_a_request(call: types.CallbackQuery):
-    await call.message.answer('Для продолжения нажмите кнопку ниже', reply_markup=request_keyboard())
     await D.contact.set()
+    await call.message.answer('Для продолжения нажмите кнопку ниже', reply_markup=request_keyboard())
+    await asyncio.sleep(0.5)
+    await call.message.answer('Укажите адрес, по которому нужно забрать вещи:')
+    await asyncio.sleep(0.5)
+
+
+@dp.callback_query_handler(text=['runner', 'myself'])
+async def delivery(call: types.CallbackQuery):
+    if call.data == 'runner':
+        await call.message.answer('Вы выбрали курьерскую доставку! Укажите вес ваших вещей:', reply_markup=choose_weight())
+    elif call.data == 'myself':
+        await call.message.answer('Вы привезете вещи сами. Укажите вес ваших вещей:', reply_markup=choose_weight())
+
+
+@dp.callback_query_handler(text=['ten', 'ten_twenty', '40_70', '70-100', 'more100', 'idk'])
+async def choose_w(call: types.CallbackQuery):
+    if call.data == 'idk':
+        await call.message.answer("""Конечно! Мы поможем вам рассчитать вес и высоту ваших вещей. 
+Вы можете привезти вещи сами или мы пришлем к вам команду муверов, чтобы рассчитать рост и вес на месте.""",
+                                  reply_markup=choose_del())
+    else:
+        await call.message.answer('Теперь укажите высоту ваших вещей:', reply_markup=choose_height())
+
+
+@dp.callback_query_handler(text='letter_to_sup')
+async def send_letter_to_sup(call: types.CallbackQuery):
+    await call.message.answer("""Данные для обращения в поддержку:
+storagebot@gmail.com
++79215897941""")
+    await asyncio.sleep(1)
+    await call.message.answer('Для продолжения воспользуйтесь кнопками из меню ниже 👇:', reply_markup=next_keyboard())
+
+
+@dp.message_handler(state=D.contact)
+async def make_application(msg: types.Message, state: FSMContext, content_types=ContentTypes.CONTACT):
+    await msg.answer('Ваши контактные данные получены.\nВыберите подходящую опцию из меню ниже 👇:', reply_markup=choose_del())
+    await state.finish()
 
 
 @dp.message_handler(commands=['start'])

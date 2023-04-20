@@ -18,7 +18,7 @@ def main_keyboard():
 def support_buttons():
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     buttons = [
-        types.InlineKeyboardButton(text='📩 Написать письмо в поддержу', callback_data='letter_to_sup'),
+        types.InlineKeyboardButton(text='📩 Обратиться в поддержу', callback_data='letter_to_sup'),
         types.InlineKeyboardButton(text='🎒 Забрать вещи', callback_data='get_back'),
         types.InlineKeyboardButton(text='📦 Мои боксы', callback_data='my_boxes'),
         types.InlineKeyboardButton(text='⬅️ Обратно в меню', callback_data='back_to_menu')
@@ -51,7 +51,7 @@ def giveaway():
 def storage_list():
     keyboard = types.InlineKeyboardMarkup(resize_keyboard=True)
     buttons = [
-        types.InlineKeyboardButton(text='✅Что можно хранить на складе', callback_data='storage_list'),
+        types.InlineKeyboardButton(text='✅ Что можно хранить на складе', callback_data='storage_list'),
         types.InlineKeyboardButton(text='✍ Оставить заявку', callback_data='application'),
         types.InlineKeyboardButton(text='⬅️ Обратно в меню', callback_data='back_to_menu')
 
@@ -88,3 +88,33 @@ def request_keyboard():
                                                                             request_contact=True,
                                                                             one_time_keyboard=True))
     return keyboard
+
+
+def choose_weight():
+    keyboard = InlineKeyboardMarkup(resize_keyboard=True)
+    buttons = [
+        types.InlineKeyboardButton(text='до 10 кг', callback_data='ten'),
+        types.InlineKeyboardButton(text='10-25 кг', callback_data='ten_twenty'),
+        types.InlineKeyboardButton(text='40 - 70 кг', callback_data='40_70'),
+        types.InlineKeyboardButton(text='70 - 100 кг', callback_data='70-100'),
+        types.InlineKeyboardButton(text='более 100 кг', callback_data='more100'),
+        types.InlineKeyboardButton(text='Не знаю, помогите мне!', callback_data='idk'),
+        types.InlineKeyboardButton(text='⬅️ Обратно в меню', callback_data='back_to_menu')
+    ]
+    keyboard.add(*buttons)
+    return keyboard
+
+
+def choose_height():
+    keyboard = InlineKeyboardMarkup(resize_keyboard=True)
+    buttons = [
+        types.InlineKeyboardButton(text='Менее 3 кв. м.', callback_data='less3'),
+        types.InlineKeyboardButton(text='3 - 7 кв. м', callback_data='3-7m'),
+        types.InlineKeyboardButton(text='7 - 10 кв. м', callback_data='7-10m'),
+        types.InlineKeyboardButton(text='Не знаю, помогите мне!', callback_data='idk'),
+        types.InlineKeyboardButton(text='⬅️ Обратно в меню', callback_data='back_to_menu')
+    ]
+    keyboard.add(*buttons)
+    return keyboard
+
+
