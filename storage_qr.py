@@ -8,17 +8,17 @@ import ast
 
 def encrypt(any_id: str) -> dict:
     salt = secrets.token_bytes(32)
-    encrypt_key = hashlib.pbkdf2_hmac("sha256", bytes(any_id, "utf-8"),
+    encrypted_key = hashlib.pbkdf2_hmac("sha256", bytes(any_id, "utf-8"),
                                       salt, 10000)
     return {
         "salt": salt,
-        "encrypted_key": encrypt_key
+        "encrypted_key": encrypted_key
         }
 
 
-def get_storage_info(encrypted_storage_id: dict,
-                     pick_up_stuff=None,
-                     add_stuff=None) -> dict:
+def fetch_box_info(encrypted_storage_id: dict,
+                   pick_up_stuff=None,
+                   add_stuff=None) -> dict:
     # get list of stuff to add or/and remove from to the box from the bot
     storage_info = encrypted_storage_id
     if pick_up_stuff is not None:
@@ -40,9 +40,9 @@ def generate_qr(storage_info: dict) -> qrcode.image:
 
 
 def is_qr_valid(data_qr: dict, data_db: dict) -> True:
-    # compare "salt" and "encrypt_key" from DB to make sure qr is valid
+    # compare "salt" and "encrypted_key" from DB to make sure qr is valid
     if (data_qr.get('salt') == data_db.get('salt')
-            and data_qr.get('encrypt_key') == data_db.get('encrypt_key')):
+            and data_qr.get('encrypted_key') == data_db.get('encrypted_key')):
         return True
 
 
@@ -61,9 +61,9 @@ def main():
     pick = ["лыжи", "сноуборд"]  # get a list of things to pick up from the bot
     add = ["мяч", "книги"]  # get a list of things to add from the bot
     encrypted_id = encrypt(storage_id)
-    storage_info = get_storage_info(encrypted_id, pick, add)
+    storage_info = fetch_box_info(encrypted_id, pick, add)
     generate_qr(storage_info).save('stuff_qr.png')
-    # add "encrypt_key" and "salt" to DB after generating the qr
+    # add "encrypted_key" and "salt" to DB after generating the qr
 
     image = cv2.imread(str(Path('stuff_qr.png')))
     data_qr = decode_qr(image)
