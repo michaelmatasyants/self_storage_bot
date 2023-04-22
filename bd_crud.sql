@@ -4,41 +4,134 @@ USE self_storage;
 CREATE TABLE user(
     user_id INT PRIMARY KEY AUTO_INCREMENT,
     nickname VARCHAR(20),
-    phone INT(11)
+    phone VARCHAR(11),
+    adress VARCHAR(80)
 );
 
-CREATE TABLE storage(
-    storage_id INT PRIMARY KEY AUTO_INCREMENT,
-    FOREIGN KEY (user_id) REFERENCES user (user_id),
+CREATE TABLE box(
+    box_id INT PRIMARY KEY AUTO_INCREMENT,
+    box_name,
+    user_id INT NOT NULL,
     created_at DATE,
     finished_at DATE,
-    box_width DECIMAL(2, 2),
-    box_height DECIMAL(2, 2),
-    box_length DECIMAL(2, 2),
-    box_weight DECIMAL(4, 2)
+    items_size DECIMAL(4, 2),
+    items_weight DECIMAL(4, 2),
+    salt VARCHAR(32),
+    encrypted_key VARCHAR(32),
+    FOREIGN KEY (user_id) REFERENCES user (user_id) ON DELETE CASCADE
 );
 
 
-/*Положить в хранилище*/
-INSERT INTO user(nickname, phone)
-VALUES ("Name", 89123456789);
+CREATE TABLE stuff(
+    stuff_id INT PRIMARY KEY AUTO_INCREMENT,
+    box_id INT NOT NULL,
+    item_name VARCHAR(30),
+    FOREIGN KEY (box_id) REFERENCES storage (box_id) ON DELETE CASCADE
+);
 
-INSERT INTO storage(
-    created_at, finished_at, box_width,
-    box_height, box_length, box_weight
-    )
-VALUES (2023-04-16, 2024-04-16, 10, 5, 20, 2.5);
+/*Положить в хранилище
+Обратить внимание на момент добавление адреса в БД.
+Решить откуда будем брать box_name и на каком этапe. Например, box_name = сцепка первой вещи
+и дата создания box-а, либо давать возможность назначать box_name пользователю.*/
 
-/*Забрать все вещи.
-Поиск по user_id. Но если у одного клиента несколько хранилищ
-добавить поиск по связке user_id c storage_id*/
+INSERT INTO user(nickname, phone, adress)
+VALUES ("Name", "89123456789", "г. Санкт-Петербрг, улица Чайковского, 62");
 
-DELETE FROM storage
-WHERE user_id = 1 AND storage_id = 4;
+SET @user_id = (
+    SELECT user_id FROM user
+    WHERE nickname = 'Name' AND phone = "89123456789"
+);
 
-/*Продлить срок хранения*/
+INSERT INTO box(box_name, user_id, created_at, finished_at, items_size, items_weight,
+                salt, encrypted_key)
+VALUES ('', @user_id, "2023-04-16", "2024-04-16", 8, 5, '', '');
+
+SET @box_id = (
+    SELECT box_id
+    FROM box
+    WHERE (user_id = @user_id AND created_at = "2023-04-16"
+           AND finished_at = "2024-04-16" AND items_size = 8
+           AND items_weight = 5)
+);
+
+
+INSERT INTO stuff (box_id, item_name)
+VALUES (@box_id, "лыжи"),
+       (@box_id, "сноуборд"),
+       (@box_id, "мяч")
+;
+
+/* Генерация QR кода. Добавление "encrypted_key" и "salt" в "box".
+Тянем из бота "box_id" */
+
+UPDATE box
+SET salt = "12345678123456781234567812345678",
+    encrypted_key = "12345678123456781234567812345678"
+WHERE box_id = 1;
+
+/*Получение из БД "box_id" и "user_id" по 
+"encrypted_key" и "salt" при сканировании QR*/
+
+SET @qr_box_id = (
+    SELECT box_id FROM box
+    WHERE (encrypted_key = 12345678123456781234567812345678
+            AND salt = 12345678123456781234567812345678)
+);
+
+SET @qr_user_id = (
+    SELECT user_id FROM box
+    WHERE (box_id = @qr_box_id)
+);
+
+/*получить stuff_id по box_id выбранной вещи, которую надо забрать
+(последнее получаем из бота или из QR, например 'лыжи').*/
+
+SELECT stuff_id FROM stuff
+WHERE box_id = @qr_box_id AND stuff = 'лыжи';
+
+
+/*Забрать все вещи без возврата.
+После скана QR удаляется список вещей у конкретного 
+user_id с конкретным box_id (получили на предыдущем шаге)*/
+
+DELETE FROM stuff
+WHERE box_id = @qr_box_id;
+
+DELETE FROM box
+WHERE user_id = @qr_user_id AND box_id = @qr_box_id;
+
+/*Забрать некоторые вещи из списка (например лыжи)*/
+DELETE FROM stuff
+WHERE box_id = @qr_box_id AND stuff_id in (
+    SELECT stuff_id FROM stuff
+    WHERE box_id = @qr_box_id AND stuff = 'лыжи'
+);
+
+/*Добавить вещи в существующий бокс.
+В ДОЛГИЙ ЯЩИК, ДОПИЛИТЬ: вещи, которые взяли, но вернут позже, добавляются в отдельную
+таблицу HOLD и живут там пока их не вернут из HOLD в stuff,
+или не заберут все остальные из stuff*/
+INSERT INTO stuff (box_id, item_name)
+VALUES ('получаем @box_id при скане qr', 'название вещи получаем при скане qr');
+
+/*Список боксов клиента для вывода в боте.*/
+SELECT box_name
+FROM box
+WHERE user_id = 'получаемый user_id из бота';
+
+/*Список вещей в box для вывода в боте*/
+SELECT item_name
+FROM stuff
+WHERE box_id = 'получаемый box_id из бота';
+
+/*Продлить срок хранения до 2025-04-16 (дату берем из бота)*/
 UPDATE storage
-SET finished_at = 2025-04-16
-WHERE user_id = 1 AND storage_id = 4;
+SET finished_at = "2025-04-16"
+WHERE user_id = 1 AND box_id = 4;
 
-/*Отчет по просроченной finished_at дате*/
+/*Отчет по просроченной finished_at дате (Список user_id и box_id по которым есть просрочка*/
+
+SELECT user_id, box_id, finished_at, nickname, phone, adress,
+       overdue_days AS (SELECT CURDATE - finished_at)
+FROM user INNER JOIN box
+ON user.user_id = box.user_id;
