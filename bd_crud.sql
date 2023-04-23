@@ -10,7 +10,7 @@ CREATE TABLE user(
 
 CREATE TABLE box(
     box_id INT PRIMARY KEY AUTO_INCREMENT,
-    box_name,
+    box_name VARCHAR(30),
     user_id INT NOT NULL,
     created_at DATE,
     finished_at DATE,
@@ -26,7 +26,7 @@ CREATE TABLE stuff(
     stuff_id INT PRIMARY KEY AUTO_INCREMENT,
     box_id INT NOT NULL,
     item_name VARCHAR(30),
-    FOREIGN KEY (box_id) REFERENCES storage (box_id) ON DELETE CASCADE
+    FOREIGN KEY (box_id) REFERENCES box (box_id) ON DELETE CASCADE
 );
 
 /*Положить в хранилище
@@ -35,7 +35,7 @@ CREATE TABLE stuff(
 и дата создания box-а, либо давать возможность назначать box_name пользователю.*/
 
 INSERT INTO user(nickname, phone, adress)
-VALUES ("Name", "89123456789", "г. Санкт-Петербрг, улица Чайковского, 62");
+VALUES ("Name", "89123456789", "г. Санкт-Петербрг, улица Чайковского, д.62, кв.13");
 
 SET @user_id = (
     SELECT user_id FROM user
@@ -68,6 +68,10 @@ UPDATE box
 SET salt = "12345678123456781234567812345678",
     encrypted_key = "12345678123456781234567812345678"
 WHERE box_id = 1;
+UPDATE box
+SET salt = "87654321876543218765432187654321",
+    encrypted_key = "87654321876543218765432187654321"
+WHERE box_id = 2;
 
 /*Получение из БД "box_id" и "user_id" по 
 "encrypted_key" и "salt" при сканировании QR*/
