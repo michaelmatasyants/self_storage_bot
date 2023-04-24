@@ -68,12 +68,20 @@ def delete_box(connection: mysql.connector, box_id: int) -> None:
     cursor.execute(("DELETE FROM box WHERE box_id = %s"), (box_id, ))
     connection.commit()
 
- 
-def get_overdue_boxes() -> list[tuple]:
-    pass
+
+# Возвращает пустой список, если нет просроченных
+def get_overdue_boxes(connection: mysql.connector) -> list[tuple]:
+    overdue = "SELECT \
+        tg_username, nickname, box_id, finished_at, phone, adress, \
+        DATEDIFF(CURDATE(), finished_at) AS overdue_days \
+        FROM user INNER JOIN box ON user.user_id = box.user_id \
+        WHERE DATEDIFF(CURDATE(), finished_at) > 0"
+    cursor = connection.cursor()
+    cursor.execute(overdue)
+    return cursor.fetchall()
 
 
-def get_overdue_box(box_id: int):
+def get_overdue_box(box_id: int) :
     return # user.phone, box.finished_at, 'etc..'
 
 
