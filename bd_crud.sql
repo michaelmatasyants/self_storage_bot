@@ -138,7 +138,7 @@ WHERE user_id = 1 AND box_id = 4;
 
 /*Отчет по просроченной finished_at дате (Список user_id и box_id по которым есть просрочка*/
 
-SELECT user_id, box_id, finished_at, nickname, phone, adress,
-       overdue_days AS (SELECT CURDATE - finished_at)
-FROM user INNER JOIN box
-ON user.user_id = box.user_id;
+SELECT tg_username, nickname, box_id, finished_at, phone, adress,
+       DATEDIFF(CURDATE(), finished_at) AS overdue_days
+FROM user INNER JOIN box ON user.user_id = box.user_id
+WHERE DATEDIFF(CURDATE(), finished_at) > 0;
