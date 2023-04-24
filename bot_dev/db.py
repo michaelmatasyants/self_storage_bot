@@ -63,8 +63,10 @@ def get_box(connection: mysql.connector, box_id: int) -> tuple:
     return box
 
 
-def delete_box(box_id: int) -> None:
-    pass
+def delete_box(connection: mysql.connector, box_id: int) -> None:
+    cursor = connection.cursor()
+    cursor.execute(("DELETE FROM box WHERE box_id = %s"), (box_id, ))
+    connection.commit()
 
  
 def get_overdue_boxes() -> list[tuple]:
