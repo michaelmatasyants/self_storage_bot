@@ -3,6 +3,7 @@ USE self_storage;
 
 CREATE TABLE user(
     user_id INT PRIMARY KEY AUTO_INCREMENT,
+    tg_username VARCHAR(20),
     nickname VARCHAR(20),
     phone VARCHAR(11),
     adress VARCHAR(80)
@@ -25,8 +26,10 @@ CREATE TABLE box(
 CREATE TABLE stuff(
     stuff_id INT PRIMARY KEY AUTO_INCREMENT,
     box_id INT NOT NULL,
+    user_id INT NOT NULL,
     item_name VARCHAR(30),
-    FOREIGN KEY (box_id) REFERENCES box (box_id) ON DELETE CASCADE
+    FOREIGN KEY (box_id) REFERENCES box (box_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES user (user_id) ON DELETE CASCADE
 );
 
 /*Положить в хранилище
@@ -34,12 +37,12 @@ CREATE TABLE stuff(
 Решить откуда будем брать box_name и на каком этапe. Например, box_name = сцепка первой вещи
 и дата создания box-а, либо давать возможность назначать box_name пользователю.*/
 
-INSERT INTO user(nickname, phone, adress)
-VALUES ("Name", "89123456789", "г. Санкт-Петербрг, улица Чайковского, д.62, кв.13");
+INSERT INTO user(tg_username, nickname, phone, adress)
+VALUES ("@tg_username", "Name", "89123456789", "г. Санкт-Петербрг, улица Чайковского, д.62, кв.13");
 
 SET @user_id = (
     SELECT user_id FROM user
-    WHERE nickname = 'Name' AND phone = "89123456789"
+    WHERE tg_username = '@tg_username'
 );
 
 INSERT INTO box(box_name, user_id, created_at, finished_at, items_size, items_weight,
@@ -55,10 +58,10 @@ SET @box_id = (
 );
 
 
-INSERT INTO stuff (box_id, item_name)
-VALUES (@box_id, "лыжи"),
-       (@box_id, "сноуборд"),
-       (@box_id, "мяч")
+INSERT INTO stuff (box_id, user_id, item_name)
+VALUES (@box_id, @user_id, "лыжи"),
+       (@box_id, @user_id, "сноуборд"),
+       (@box_id, @user_id, "мяч")
 ;
 
 /* Генерация QR кода. Добавление "encrypted_key" и "salt" в "box".
