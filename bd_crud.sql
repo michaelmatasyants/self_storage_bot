@@ -17,8 +17,8 @@ CREATE TABLE box(
     finished_at DATE,
     items_size DECIMAL(4, 2),
     items_weight DECIMAL(4, 2),
-    salt VARCHAR(32),
-    encrypted_key VARCHAR(32),
+    salt BINARY(32),
+    encrypted_key BINARY(32),
     FOREIGN KEY (user_id) REFERENCES user (user_id) ON DELETE CASCADE
 );
 
@@ -40,6 +40,9 @@ CREATE TABLE stuff(
 INSERT INTO user(tg_username, nickname, phone, adress)
 VALUES ("@tg_username", "Name", "89123456789", "г. Санкт-Петербрг, улица Чайковского, д.62, кв.13");
 
+INSERT INTO user(tg_username, nickname, phone, adress)
+VALUES ("@tg_123", "Another Name", "89111111111", "г. Москва");
+
 SET @user_id = (
     SELECT user_id FROM user
     WHERE tg_username = '@tg_username'
@@ -49,6 +52,18 @@ INSERT INTO box(box_name, user_id, created_at, finished_at, items_size, items_we
                 salt, encrypted_key)
 VALUES ('', @user_id, "2023-04-16", "2024-04-16", 8, 5, '', '');
 
+INSERT INTO box(box_name, user_id, created_at, finished_at, items_size, items_weight,
+                salt, encrypted_key)
+VALUES ('box_name', 2, "2023-04-24", "2024-04-24", 12, 8, '', '');
+
+INSERT INTO box(box_name, user_id, created_at, finished_at, items_size, items_weight,
+                salt, encrypted_key)
+VALUES ('any_box', 2, "2023-02-10", "2024-02-10", 2, 1, '', '');
+
+INSERT INTO box(box_name, user_id, created_at, finished_at, items_size, items_weight,
+                salt, encrypted_key)
+VALUES ('overdue_box', 2, "2022-04-24", "2023-02-16", 2, 2, '', '');
+
 SET @box_id = (
     SELECT box_id
     FROM box
@@ -57,12 +72,15 @@ SET @box_id = (
            AND items_weight = 5)
 );
 
+INSERT INTO stuff (box_id, user_id, item_name)
+VALUES (1, 1, "лыжи"),
+       (1, 1, "сноуборд"),
+       (1, 1, "мяч");
 
 INSERT INTO stuff (box_id, user_id, item_name)
-VALUES (@box_id, @user_id, "лыжи"),
-       (@box_id, @user_id, "сноуборд"),
-       (@box_id, @user_id, "мяч")
-;
+VALUES (2, 2, "лыжи"),
+       (2, 2, "сноуборд"),
+       (2, 2, "мяч");
 
 /* Генерация QR кода. Добавление "encrypted_key" и "salt" в "box".
 Тянем из бота "box_id" */
