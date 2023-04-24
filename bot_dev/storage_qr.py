@@ -1,9 +1,9 @@
 from pathlib import Path
 import hashlib
 import secrets
+import ast
 import qrcode
 import cv2
-import ast
 
 
 def encrypt(any_id: str) -> dict:
