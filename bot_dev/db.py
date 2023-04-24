@@ -1,4 +1,6 @@
+import os
 import mysql.connector
+from dotenv import load_dotenv, find_dotenv
 
 
 def create_connection(host_name, database, user_name, user_password):
@@ -43,8 +45,13 @@ def create_box(connection: mysql.connector, data_user: list, data_box: list):
     connection.commit()
 
 
-def get_user_boxes(user_id: int) -> list[tuple]:
-    pass
+def get_user_boxes(connection: mysql.connector, user_id: int) -> list[tuple]:
+    cursor = connection.cursor()
+    user_boxes = ("SELECT * FROM box "
+                  "WHERE user_id = %s")
+    cursor.execute(user_boxes, (user_id, ))
+    boxes = cursor.fetchall()
+    return boxes
 
 
 def get_box(box_id: int) -> tuple:
@@ -66,3 +73,14 @@ def get_overdue_box(box_id: int):
 def get_all_boxes() -> list[tuple]:
     pass
 
+
+def main():
+    load_dotenv(find_dotenv())
+    cnx = create_connection(host_name="localhost", database="self_storage",
+                      user_name="root",
+                      user_password=os.environ["USER_PASSWORD"])
+    print(get_user_boxes(cnx, 2))
+
+
+if __name__ == "__main__":
+    main()
