@@ -54,8 +54,13 @@ def get_user_boxes(connection: mysql.connector, user_id: int) -> list[tuple]:
     return boxes
 
 
-def get_box(box_id: int) -> tuple:
-    pass
+def get_box(connection: mysql.connector, box_id: int) -> tuple:
+    cursor = connection.cursor()
+    user_box = ("SELECT * FROM box "
+                "WHERE box_id = %s")
+    cursor.execute(user_box, (box_id, ))
+    box = cursor.fetchall()[0]
+    return box
 
 
 def delete_box(box_id: int) -> None:
@@ -79,7 +84,6 @@ def main():
     cnx = create_connection(host_name="localhost", database="self_storage",
                       user_name="root",
                       user_password=os.environ["USER_PASSWORD"])
-    print(get_user_boxes(cnx, 2))
 
 
 if __name__ == "__main__":
