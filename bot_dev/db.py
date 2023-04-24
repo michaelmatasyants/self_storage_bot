@@ -1,6 +1,7 @@
 import os
 import mysql.connector
 from dotenv import load_dotenv, find_dotenv
+from storage_qr import encrypt
 
 
 def create_connection(host_name, database, user_name, user_password):
@@ -98,11 +99,37 @@ def get_all_boxes(connection: mysql.connector) -> list[tuple]:
     return cursor.fetchall()
 
 
+# Список из stuff по указанному box_id
+def get_stuff_from_box(connection: mysql.connector, box_id: int) -> list[tuple]:
+    cursor = connection.cursor()
+    cursor.execute(("SELECT * FROM stuff WHERE box_id = %s"), (box_id, ))
+    return cursor.fetchall()
+
+
+# Список вещей по box_id
+def get_item_name(connection: mysql.connector, box_id: int) -> list:
+    cursor = connection.cursor()
+    cursor.execute(("SELECT item_name FROM stuff WHERE box_id = %s"), (box_id, ))
+    items = cursor.fetchall()
+    return [item[0] for item in items]
+
+
+# После генерации QR добавляется "encrypted_key" и "salt" в таблицу "box", 
+# чтобы сканер идентифицировал пользователя.
+def add_salt_to_user(connection: mysql.connector, box_id: int) -> None:
+    salt, encrypted_key = encrypt(str(box_id)).values()
+    cursor = connection.cursor()
+    add_salt = "UPDATE box SET salt = %s, encrypted_key = %s WHERE box_id = %s"
+    cursor.execute(add_salt, (salt, encrypted_key, box_id, ))
+    connection.commit()
+
+
 def main():
     load_dotenv(find_dotenv())
     cnx = create_connection(host_name="localhost", database="self_storage",
                       user_name="root",
                       user_password=os.environ["USER_PASSWORD"])
+    add_salt_to_user(cnx, 1)
 
 
 if __name__ == "__main__":
