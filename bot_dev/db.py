@@ -81,12 +81,21 @@ def get_overdue_boxes(connection: mysql.connector) -> list[tuple]:
     return cursor.fetchall()
 
 
-def get_overdue_box(box_id: int) :
-    return # user.phone, box.finished_at, 'etc..'
+def get_overdue_box(connection: mysql.connector, box_id: int) -> tuple:
+    overdue = "SELECT \
+        tg_username, nickname, box_id, finished_at, phone, adress, \
+        DATEDIFF(CURDATE(), finished_at) AS overdue_days \
+        FROM user INNER JOIN box ON user.user_id = box.user_id \
+        WHERE DATEDIFF(CURDATE(), finished_at) > 0 AND box_id = %s"
+    cursor = connection.cursor()
+    cursor.execute(overdue, (box_id, ))
+    return cursor.fetchall()[0]
 
 
-def get_all_boxes() -> list[tuple]:
-    pass
+def get_all_boxes(connection: mysql.connector) -> list[tuple]:
+    cursor = connection.cursor()
+    cursor.execute(("SELECT * FROM box"))
+    return cursor.fetchall()
 
 
 def main():
