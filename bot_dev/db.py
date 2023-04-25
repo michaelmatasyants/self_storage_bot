@@ -140,6 +140,24 @@ def take_item(connection: mysql.connector, box_id: int, stuff_id: int):
     connection.commit()
 
 
+def add_item(connection: mysql.connector, box_id: int,
+             user_id: int, item_name: str) -> None:
+    cursor = connection.cursor()
+    item = ("INSERT INTO stuff (box_id, user_id, item_name) "
+            "VALUES (%s, %s, %s)")
+    cursor.execute(item, (box_id, user_id, item_name))
+    connection.commit()
+
+
+def extend_storage_deadline(connection: mysql.connector, new_finished_at,
+                            user_id: int, box_id: int):
+    cursor = connection.cursor()
+    new_date = ("UPDATE box SET finished_at = %s "
+                   "WHERE user_id = %s AND box_id = %s")
+    cursor.execute(new_date, (new_finished_at, user_id, box_id))
+    connection.commit()
+
+
 def main():
     load_dotenv(find_dotenv())
     cnx = create_connection(host_name="localhost", database="self_storage",
