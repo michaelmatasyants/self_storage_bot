@@ -153,7 +153,7 @@ FROM stuff
 WHERE box_id = 'получаемый box_id из бота';
 
 /*Продлить срок хранения до 2025-04-16 (дату берем из бота)*/
-UPDATE storage
+UPDATE box
 SET finished_at = "2025-04-16"
 WHERE user_id = 1 AND box_id = 4;
 
