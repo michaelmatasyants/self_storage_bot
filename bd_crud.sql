@@ -82,6 +82,9 @@ VALUES (2, 2, "лыжи"),
        (2, 2, "сноуборд"),
        (2, 2, "мяч");
 
+INSERT INTO stuff (box_id, user_id, item_name)
+VALUES (5, 2, "телевизор");
+
 /* Генерация QR кода. Добавление "encrypted_key" и "salt" в "box".
 Тянем из бота "box_id" */
 
