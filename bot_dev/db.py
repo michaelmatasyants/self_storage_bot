@@ -124,12 +124,27 @@ def add_salt_to_user(connection: mysql.connector, box_id: int) -> None:
     connection.commit()
 
 
+# Забрать все вещи из бокса без возврата, т.е. удалить box_id и вещи из stuff
+def take_all_items(connection: mysql.connector, box_id: int) -> None:
+    cursor = connection.cursor()
+    delete_items = ("DELETE FROM stuff WHERE box_id = %s")
+    cursor.execute(delete_items, (box_id, ))
+    delete_box(connection=connection, box_id=box_id)
+    connection.commit()
+
+
+def take_item(connection: mysql.connector, box_id: int, stuff_id: int):
+    cursor = connection.cursor()
+    delete_item = ("DELETE FROM stuff WHERE box_id = %s AND stuff_id = %s")
+    cursor.execute(delete_item, (box_id, stuff_id))
+    connection.commit()
+
+
 def main():
     load_dotenv(find_dotenv())
     cnx = create_connection(host_name="localhost", database="self_storage",
                       user_name="root",
                       user_password=os.environ["USER_PASSWORD"])
-    add_salt_to_user(cnx, 1)
 
 
 if __name__ == "__main__":
